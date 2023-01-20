@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["property", "user", "review"]
+}
+
+model propertyListing {
+  id                String            @id @default(uuid())
+  propertyName      String
+  cashBack          Int
+  carpetArea        Int
+  numberOfBeds      Int
+  numberOfBaths     Int
+  numberOfBalconies Int
+  estateDescription String
+  dateListed        DateTime
+  price             Int
+  propertyType      String
+  constructedDate   DateTime
+  postalCode        Int
+  location          location? //1-1 relation with location
+  imagesAndVideos   imagesAndVideos[] //one to many relationship with imagesAndVideos
+  brochure          brochure? //1-1 relation with brochure
+  review            review[] //one to many relationship with review
+
+  @@schema("property")
+}
+
+model location {
+  id                String          @id @default(uuid())
+  latitude          Decimal
+  longitude         Decimal
+  propertyId        propertyListing @relation(fields: [propertyListingId], references: [id]) //1-1 relation with properyListing
+  propertyListingId String          @unique
+
+  @@schema("property")
+}
+
+model brochure {
+  id                Int             @id @default(autoincrement())
+  brochurePath      String
+  brochure          propertyListing @relation(fields: [propertyListingId], references: [id])
+  propertyListingId String          @unique //1-1 relation with propertyListing
+
+  @@schema("property")
+}
+
+model imagesAndVideos {
+  id                Int             @id @default(autoincrement())
+  imageOrVidPath    String
+  media             propertyListing @relation(fields: [propertyListingId], references: [id])
+  propertyListingId String //one to many relationship with propertyListing
+
+  @@schema("property")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  isAdmin    Boolean
+  firstName  String
+  middleName String?
+  lastName   String
+  social     Json?    @unique
+  mobNumber  Int      @unique
+  reviews    review[] //one to many relationship with review
+
+  @@schema("user")
+}
+
+model review {
+  id                Int             @id @default(autoincrement())
+  reviewText        String
+  starRating        Float
+  review            User            @relation(fields: [userId], references: [id]) //one to many relationship with user
+  userId            Int
+  property          propertyListing @relation(fields: [propertyListingId], references: [id]) //one to many relationship with propertyListing
+  propertyListingId String
+
+  @@schema("review")
+}
